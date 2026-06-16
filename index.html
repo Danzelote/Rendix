@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rendix · danzelot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<!-- Favicon SVG inline -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230D1117'/><polyline points='28,9 17,19 11,13 4,20' fill='none' stroke='%2300C896' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/><polyline points='22,9 28,9 28,15' fill='none' stroke='%2300C896' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"/>
+<style>
+  :root {
+    --bg: #0D1117;
+    --surface: #161B22;
+    --surface2: #1C2330;
+    --border: #21262D;
+    --border-light: #30363D;
+    --green: #00C896;
+    --green-dim: rgba(0,200,150,0.12);
+    --text: #E6EDF3;
+    --text-muted: #7D8590;
+    --text-dim: #484F58;
+    --red: #FF6B6B;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; min-height: 100vh; }
+  .mono { font-family: 'DM Mono', monospace; }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+    gap: 12px;
+  }
+  .logo { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -0.3px; }
+  .logo svg { color: var(--green); flex-shrink: 0; }
+  .header-right { display: flex; align-items: center; gap: 6px; }
+  .hdr-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.15s;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .hdr-btn:hover { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+  .hdr-btn.lang { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; width: auto; padding: 0 10px; }
+
+  /* MAIN */
+  main { max-width: 900px; margin: 0 auto; padding: 32px 20px 100px; }
+
+  /* HERO */
+  .hero { margin-bottom: 36px; }
+  .hero-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 8px; }
+  .hero-total { font-family: 'DM Mono', monospace; font-size: clamp(32px, 6vw, 52px); font-weight: 300; letter-spacing: -1px; color: var(--text); line-height: 1; }
+  .hero-total span { color: var(--green); }
+  .hero-stats { display: flex; gap: 28px; margin-top: 16px; flex-wrap: wrap; }
+  .hero-stat { display: flex; flex-direction: column; gap: 2px; }
+  .hero-stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .hero-stat-val { font-family: 'DM Mono', monospace; font-size: 16px; color: var(--green); }
+  .hero-stat-val.neutral { color: var(--text-muted); }
+
+  /* COMPOSITION BAR */
+  .composition-section { margin-bottom: 36px; }
+  .composition-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 10px; }
+  .composition-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; gap: 2px; }
+  .composition-bar-seg { height: 100%; border-radius: 2px; transition: flex 0.5s ease; }
+  .composition-legend { display: flex; flex-wrap: wrap; gap: 12px 20px; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* TOOLBAR */
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+  .filter-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); border-radius: 20px; padding: 5px 14px; font-size: 12px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+  .btn-add { display: flex; align-items: center; gap: 6px; background: var(--green); color: #0D1117; border: none; border-radius: var(--radius-sm); padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s, transform 0.1s; }
+  .btn-add:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* CARDS */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: relative; transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s; }
+  .card:hover { border-color: var(--border-light); box-shadow: 0 0 0 1px var(--border-light), 0 8px 24px rgba(0,0,0,0.3); transform: translateY(-2px); }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+  .card-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; background: var(--surface2); flex-shrink: 0; }
+  .card-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+  .card:hover .card-actions { opacity: 1; }
+  .icon-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; transition: all 0.15s; font-family: inherit; }
+  .icon-btn:hover { border-color: var(--green); color: var(--green); }
+  .icon-btn.danger:hover { border-color: var(--red); color: var(--red); }
+  .card-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+  .card-type { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
+  .card-amount { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 300; letter-spacing: -0.5px; }
+  .card-yield-row { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .card-yield-label { font-size: 11px; color: var(--text-muted); }
+  .card-yield-val { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--green); }
+  .card-yield-projected { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-family: 'DM Mono', monospace; }
+  .card-yield-projected span { color: var(--green); opacity: 0.8; }
+  .card-weight-bar { height: 2px; background: var(--border); border-radius: 1px; margin-top: 14px; overflow: hidden; }
+  .card-weight-fill { height: 100%; border-radius: 1px; transition: width 0.5s ease; }
+  .card-updated { font-size: 10px; color: var(--text-dim); margin-top: 8px; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 16px; }
+  .empty h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
+  .empty p { font-size: 13px; line-height: 1.6; }
+
+  /* MODAL (shared by add/edit and info) */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--surface); border: 1px solid var(--border-light); border-radius: 16px; padding: 28px; width: 100%; max-width: 440px; transform: translateY(16px) scale(0.98); transition: transform 0.2s; max-height: 90vh; overflow-y: auto; }
+  .overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px; line-height: 1; padding: 4px; transition: color 0.15s; }
+  .modal-close:hover { color: var(--text); }
+  .form-group { margin-bottom: 18px; }
+  .form-label { display: block; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; outline: none; transition: border-color 0.15s; }
+  .form-input:focus { border-color: var(--green); }
+  .form-input::placeholder { color: var(--text-dim); }
+  select.form-input { cursor: pointer; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .emoji-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .emoji-opt { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.1s; }
+  .emoji-opt:hover, .emoji-opt.selected { border-color: var(--green); background: var(--green-dim); }
+  .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface2); border: 1px solid var(--border-light); border-radius: var(--radius-sm); z-index: 10; max-height: 200px; overflow-y: auto; margin-top: 4px; }
+  .suggestion-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; transition: background 0.1s; font-size: 13px; }
+  .suggestion-item:hover { background: var(--surface); }
+  .suggestion-item-icon { font-size: 18px; width: 24px; text-align: center; }
+  .suggestion-item-info { flex: 1; }
+  .suggestion-item-name { font-weight: 500; }
+  .suggestion-item-yield { font-size: 11px; color: var(--green); font-family: 'DM Mono', monospace; }
+  .form-group-relative { position: relative; }
+  .modal-footer { display: flex; gap: 10px; margin-top: 24px; }
+  .btn-secondary { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius-sm); padding: 10px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .btn-secondary:hover { border-color: var(--border-light); color: var(--text); }
+  .btn-primary { flex: 2; background: var(--green); border: none; color: #0D1117; border-radius: var(--radius-sm); padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; }
+  .btn-primary:hover { opacity: 0.9; }
+
+  /* INFO MODAL specific */
+  .info-app-icon { width: 64px; height: 64px; border-radius: 16px; background: var(--surface2); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; border: 1px solid var(--border); }
+  .info-app-icon svg { color: var(--green); }
+  .info-app-name { text-align: center; font-weight: 600; font-size: 18px; margin-bottom: 4px; }
+  .info-app-version { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 20px; font-family: 'DM Mono', monospace; }
+  .info-desc { font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px; text-align: center; }
+  .info-links { display: flex; flex-direction: column; gap: 10px; }
+  .info-link-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border-radius: var(--radius-sm); padding: 11px 16px;
+    font-size: 13px; font-weight: 600; text-decoration: none;
+    cursor: pointer; border: none; font-family: inherit;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .info-link-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .info-link-btn.kofi { background: #FF5E5B; color: #fff; }
+  .info-link-btn.github { background: var(--surface2); color: var(--text); border: 1px solid var(--border-light); }
+  .info-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* KO-FI FLOAT */
+  .kofi-float {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: #FF5E5B; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; text-decoration: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    z-index: 150; opacity: 0.85;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .kofi-float:hover { opacity: 1; transform: scale(1.1); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface2); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 10px 20px; font-size: 13px; color: var(--text); z-index: 999; opacity: 0; transition: all 0.25s ease; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.green { border-left: 3px solid var(--green); }
+
+  @media (max-width: 520px) {
+    header { padding: 12px 16px; }
+    main { padding: 24px 14px 90px; }
+    .hero-total { font-size: 36px; }
+    .grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .card-actions { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+      <polyline points="16 7 22 7 22 13"/>
+    </svg>
+    <span id="appTitle">Rendix</span>
+  </div>
+  <div class="header-right">
+    <button class="hdr-btn lang" id="langBtn" onclick="toggleLang()" title="Switch language">EN</button>
+    <button class="hdr-btn" onclick="openInfo()" title="Info" id="infoBtn">ⓘ</button>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="hero-label" id="lbl-total">Total invertido</div>
+    <div class="hero-total mono">$<span id="heroTotalNum">0.00</span></div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-label" id="lbl-yield">Rendimiento prom.</span>
+        <span class="hero-stat-val mono" id="heroYield">0.00%</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-label" id="lbl-annual">Ganancia anual est.</span>
+        <span class="hero-stat-val mono" id="heroAnnual">$0.00</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-label" id="lbl-instruments">Instrumentos</span>
+        <span class="hero-stat-val neutral mono" id="heroCount">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="composition-section" id="compositionSection" style="display:none">
+    <div class="composition-label" id="lbl-composition">Composición del portafolio</div>
+    <div class="composition-bar" id="compositionBar"></div>
+    <div class="composition-legend" id="compositionLegend"></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar-left" style="display:flex;gap:8px;flex-wrap:wrap;" id="filterBtns"></div>
+    <button class="btn-add" onclick="openModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span id="btn-add-lbl">Agregar instrumento</span>
+    </button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="emptyState" style="display:none">
+    <div class="empty-icon">📊</div>
+    <h3 id="empty-title">Tu portafolio está vacío</h3>
+    <p id="empty-desc">Agrega tu primer instrumento de inversión<br>para empezar a darle seguimiento.</p>
+  </div>
+</main>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Agregar instrumento</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="form-group form-group-relative">
+      <label class="form-label" id="lbl-name">Nombre</label>
+      <input class="form-input" id="inputName" type="text" autocomplete="off" oninput="onNameInput()"/>
+      <div class="suggestions" id="suggestions" style="display:none"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="lbl-type">Tipo de instrumento</label>
+      <select class="form-input" id="inputType"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" id="lbl-amount">Monto ($MXN)</label>
+        <input class="form-input mono" id="inputAmount" type="number" min="0" step="0.01" inputmode="decimal"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" id="lbl-yield-f">Rendimiento anual %</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button type="button" id="yieldSignBtn" onclick="toggleYieldSign()"
+            style="flex-shrink:0;width:36px;height:42px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-muted);font-size:18px;font-weight:300;cursor:pointer;transition:all 0.15s;font-family:'DM Mono',monospace;line-height:1;">+</button>
+          <input class="form-input mono" id="inputYield" type="number" step="0.01" min="0" inputmode="decimal" style="flex:1;"/>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="lbl-icon">Ícono / Emoji</label>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <input class="form-input" id="inputEmoji" type="text" maxlength="4" style="width:70px;text-align:center;font-size:18px;"/>
+        <span id="lbl-icon-or" style="font-size:12px;color:var(--text-muted)">o elige uno:</span>
+      </div>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btnCancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" id="modalSaveBtn" onclick="saveInstrument()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- INFO MODAL -->
+<div class="overlay" id="infoOverlay" onclick="handleInfoClick(event)">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header" style="margin-bottom:20px;">
+      <span class="modal-title" id="info-modal-title">Acerca de</span>
+      <button class="modal-close" onclick="closeInfo()">×</button>
+    </div>
+    <div class="info-app-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg>
+    </div>
+    <div class="info-app-name" id="info-app-name">Rendix</div>
+    <div class="info-app-version">v1.0 · danzelot</div>
+    <p class="info-desc" id="info-desc">Rastrea tus inversiones en un solo lugar. Agrega instrumentos, personaliza nombres e íconos, y visualiza tu rendimiento ponderado total mes con mes.</p>
+    <div class="info-divider"></div>
+    <div class="info-links" style="margin-top:16px;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:8px;" id="info-data-lbl">Mis datos</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button class="info-link-btn github" onclick="exportData()" id="btn-export" style="font-size:12px;padding:10px 8px;">
+          ⬇ <span id="info-export-lbl">Exportar datos</span>
+        </button>
+        <button class="info-link-btn github" onclick="document.getElementById('importFile').click()" id="btn-import" style="font-size:12px;padding:10px 8px;">
+          ⬆ <span id="info-import-lbl">Importar datos</span>
+        </button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"/>
+      <div class="info-divider" style="margin-top:12px;"></div>
+      <a class="info-link-btn kofi" href="https://ko-fi.com/danzelot" target="_blank" rel="noopener">
+        ☕ <span id="info-kofi-lbl">Apoyar en Ko-fi</span>
+      </a>
+      <a class="info-link-btn github" href="https://github.com/danzelot" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- KO-FI FLOAT -->
+<a class="kofi-float" href="https://ko-fi.com/danzelot" target="_blank" rel="noopener" title="Ko-fi">☕</a>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── i18n ─────────────────────────────────────────────────────────────────────
+const T = {
+  es: {
+    appTitle: "Rendix",
+    totalLabel: "Total invertido",
+    yieldLabel: "Rendimiento prom.",
+    annualLabel: "Ganancia anual est.",
+    instrumentsLabel: "Instrumentos",
+    compositionLabel: "Composición del portafolio",
+    addBtn: "Agregar instrumento",
+    emptyTitle: "Tu portafolio está vacío",
+    emptyDesc: "Agrega tu primer instrumento de inversión<br>para empezar a darle seguimiento.",
+    emptyFilter: "Sin resultados en",
+    emptyFilterDesc: "No hay instrumentos en la categoría",
+    modalAdd: "Agregar instrumento",
+    modalEdit: "Editar instrumento",
+    lblName: "Nombre",
+    lblType: "Tipo de instrumento",
+    lblAmount: "Monto ($MXN)",
+    lblYield: "Rendimiento anual %",
+    lblIcon: "Ícono / Emoji",
+    lblIconOr: "o elige uno:",
+    btnCancel: "Cancelar",
+    btnSave: "Agregar",
+    btnSaveEdit: "Guardar cambios",
+    infoTitle: "Acerca de",
+    infoName: "Rendix",
+    infoDesc: "Rendix — rastrea tus inversiones en un solo lugar. Agrega instrumentos, personaliza nombres e íconos, y visualiza tu rendimiento ponderado total mes con mes.",
+    kofiLbl: "Apoyar en Ko-fi",
+    types: ["Gobierno","Fintech","Banco","Inversión","Cripto","Acciones","Inmueble","Otro"],
+    all: "Todos",
+    updated: "Actualizado",
+    annualYield: "Rendimiento anual",
+    estGain: "Ganancia est.:",
+    perYear: "/año",
+    refYield: "% anual ref.",
+    variableYield: "Rendimiento variable",
+    toastAdded: "Instrumento agregado ✓",
+    toastSaved: "Cambios guardados ✓",
+    toastDeleted: "Instrumento eliminado",
+    toastName: "Ingresa un nombre",
+    toastAmount: "Ingresa un monto válido",
+    toastYield: "Ingresa un rendimiento válido",
+    confirmDelete: "¿Eliminar este instrumento?",
+    namePlaceholder: "Ej: CETES 28 días, Nu Cuenta...",
+    langToggle: "EN",
+    exportLbl: "Exportar datos",
+    importLbl: "Importar datos",
+    dataSection: "Mis datos",
+    exportToast: "Datos exportados ✓",
+    importToast: "Datos importados ✓",
+    importError: "Archivo inválido o corrupto",
+    importConfirm: "Esto reemplazará tus datos actuales. ¿Continuar?",
+  },
+  en: {
+    appTitle: "Rendix",
+    totalLabel: "Total invested",
+    yieldLabel: "Avg. return",
+    annualLabel: "Est. annual gain",
+    instrumentsLabel: "Instruments",
+    compositionLabel: "Portfolio composition",
+    addBtn: "Add instrument",
+    emptyTitle: "Your portfolio is empty",
+    emptyDesc: "Add your first investment instrument<br>to start tracking it.",
+    emptyFilter: "No results in",
+    emptyFilterDesc: "No instruments in category",
+    modalAdd: "Add instrument",
+    modalEdit: "Edit instrument",
+    lblName: "Name",
+    lblType: "Instrument type",
+    lblAmount: "Amount ($MXN)",
+    lblYield: "Annual return %",
+    lblIcon: "Icon / Emoji",
+    lblIconOr: "or pick one:",
+    btnCancel: "Cancel",
+    btnSave: "Add",
+    btnSaveEdit: "Save changes",
+    infoTitle: "About",
+    infoName: "Rendix",
+    infoDesc: "Rendix — track all your investments in one place. Add instruments, customize names and icons, and visualize your weighted average return month by month.",
+    kofiLbl: "Support on Ko-fi",
+    types: ["Government","Fintech","Bank","Investment","Crypto","Stocks","Real Estate","Other"],
+    all: "All",
+    updated: "Updated",
+    annualYield: "Annual return",
+    estGain: "Est. gain:",
+    perYear: "/yr",
+    refYield: "% annual ref.",
+    variableYield: "Variable return",
+    toastAdded: "Instrument added ✓",
+    toastSaved: "Changes saved ✓",
+    toastDeleted: "Instrument removed",
+    toastName: "Enter a name",
+    toastAmount: "Enter a valid amount",
+    toastYield: "Enter a valid return",
+    confirmDelete: "Delete this instrument?",
+    namePlaceholder: "E.g.: CETES 28 days, Nu Account...",
+    langToggle: "ES",
+    exportLbl: "Export data",
+    importLbl: "Import data",
+    dataSection: "My data",
+    exportToast: "Data exported ✓",
+    importToast: "Data imported ✓",
+    importError: "Invalid or corrupted file",
+    importConfirm: "This will replace your current data. Continue?",
+  }
+};
+
+// ─── CATALOG ─────────────────────────────────────────────────────────────────
+const CATALOG = [
+  { name: "CETES 28 días",  nameEn: "CETES 28 days",  icon:"🏛️", typeEs:"Gobierno",  typeEn:"Government", yield:10.55 },
+  { name: "CETES 91 días",  nameEn: "CETES 91 days",  icon:"🏛️", typeEs:"Gobierno",  typeEn:"Government", yield:10.50 },
+  { name: "CETES 182 días", nameEn: "CETES 182 days", icon:"🏛️", typeEs:"Gobierno",  typeEn:"Government", yield:10.44 },
+  { name: "CETES 364 días", nameEn: "CETES 364 days", icon:"🏛️", typeEs:"Gobierno",  typeEn:"Government", yield:10.30 },
+  { name: "Mercado Pago",   nameEn: "Mercado Pago",   icon:"💙", typeEs:"Fintech",   typeEn:"Fintech",    yield:13.5  },
+  { name: "Nu Cuenta",      nameEn: "Nu Account",     icon:"💜", typeEs:"Fintech",   typeEn:"Fintech",    yield:13.0  },
+  { name: "Hey Banco",      nameEn: "Hey Banco",      icon:"🟠", typeEs:"Fintech",   typeEn:"Fintech",    yield:12.5  },
+  { name: "Klar",           nameEn: "Klar",           icon:"🟣", typeEs:"Fintech",   typeEn:"Fintech",    yield:10.0  },
+  { name: "Flink",          nameEn: "Flink",          icon:"🟡", typeEs:"Fintech",   typeEn:"Fintech",    yield:9.0   },
+  { name: "GBM+",           nameEn: "GBM+",           icon:"📈", typeEs:"Inversión", typeEn:"Investment", yield:11.0  },
+  { name: "BBVA Invest",    nameEn: "BBVA Invest",    icon:"🔵", typeEs:"Banco",     typeEn:"Bank",       yield:8.5   },
+  { name: "Banorte Fondos", nameEn: "Banorte Funds",  icon:"🔴", typeEs:"Banco",     typeEn:"Bank",       yield:8.0   },
+  { name: "Actinver",       nameEn: "Actinver",       icon:"🏦", typeEs:"Inversión", typeEn:"Investment", yield:9.5   },
+  { name: "Bitcoin",        nameEn: "Bitcoin",        icon:"₿",  typeEs:"Cripto",    typeEn:"Crypto",     yield:null  },
+  { name: "Ethereum",       nameEn: "Ethereum",       icon:"Ξ",  typeEs:"Cripto",    typeEn:"Crypto",     yield:null  },
+  { name: "Bitso",          nameEn: "Bitso",          icon:"🟠", typeEs:"Cripto",    typeEn:"Crypto",     yield:null  },
+  { name: "S&P 500 ETF",    nameEn: "S&P 500 ETF",   icon:"🇺🇸", typeEs:"Acciones",  typeEn:"Stocks",     yield:null  },
+  { name: "Fibra Uno",      nameEn: "Fibra Uno",      icon:"🏢", typeEs:"Inmueble",  typeEn:"Real Estate",yield:8.0   },
+  { name: "Afore",          nameEn: "Afore",          icon:"👴", typeEs:"Gobierno",  typeEn:"Government", yield:9.0   },
+];
+const EMOJIS = ["📈","💰","🏦","🏛️","💜","💙","🟠","🔵","🔴","🟡","🟣","₿","Ξ","🏢","👴","🌐","⚡","🎯","💎","🚀"];
+const PALETTE = ["#00C896","#7B61FF","#FF6B6B","#F0A500","#3B9EFF","#FF8C69","#00D4AA","#B45BFF","#FF4F7B","#00C5FF"];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let instruments = JSON.parse(localStorage.getItem("portfolio_v2") || "[]");
+let editingId = null;
+let activeFilter = null; // null = "all"
+let lang = localStorage.getItem("portfolio_lang") || "es";
+
+function save() { localStorage.setItem("portfolio_v2", JSON.stringify(instruments)); }
+function t(k) { return T[lang][k]; }
+function colorForIndex(idx) { return PALETTE[idx % PALETTE.length]; }
+
+function fmt(n) {
+  return new Intl.NumberFormat(lang === "es" ? "es-MX" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+}
+function today() {
+  return new Date().toLocaleDateString(lang === "es" ? "es-MX" : "en-US", { day:"2-digit", month:"short", year:"numeric" });
+}
+
+// ─── LANG ────────────────────────────────────────────────────────────────────
+function toggleLang() {
+  lang = lang === "es" ? "en" : "es";
+  localStorage.setItem("portfolio_lang", lang);
+  activeFilter = null;
+  applyLang();
+  render();
+}
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t("appTitle") + " · danzelot";
+  document.getElementById("appTitle").textContent = t("appTitle");
+  document.getElementById("langBtn").textContent = t("langToggle");
+  document.getElementById("lbl-total").textContent = t("totalLabel");
+  document.getElementById("lbl-yield").textContent = t("yieldLabel");
+  document.getElementById("lbl-annual").textContent = t("annualLabel");
+  document.getElementById("lbl-instruments").textContent = t("instrumentsLabel");
+  document.getElementById("lbl-composition").textContent = t("compositionLabel");
+  document.getElementById("btn-add-lbl").textContent = t("addBtn");
+  document.getElementById("lbl-name").textContent = t("lblName");
+  document.getElementById("lbl-type").textContent = t("lblType");
+  document.getElementById("lbl-amount").textContent = t("lblAmount");
+  document.getElementById("lbl-yield-f").textContent = t("lblYield");
+  document.getElementById("lbl-icon").textContent = t("lblIcon");
+  document.getElementById("lbl-icon-or").textContent = t("lblIconOr");
+  document.getElementById("btnCancel").textContent = t("btnCancel");
+  document.getElementById("info-modal-title").textContent = t("infoTitle");
+  document.getElementById("info-app-name").textContent = t("infoName");
+  document.getElementById("info-desc").textContent = t("infoDesc");
+  document.getElementById("info-kofi-lbl").textContent = t("kofiLbl");
+  document.getElementById("info-export-lbl").textContent = t("exportLbl");
+  document.getElementById("info-import-lbl").textContent = t("importLbl");
+  document.getElementById("info-data-lbl").textContent = t("dataSection");
+  document.getElementById("inputName").placeholder = t("namePlaceholder");
+  // rebuild type select
+  const sel = document.getElementById("inputType");
+  const prev = sel.value;
+  sel.innerHTML = "";
+  t("types").forEach(tp => {
+    const opt = document.createElement("option");
+    opt.value = tp; opt.textContent = tp;
+    sel.appendChild(opt);
+  });
+  sel.value = prev || t("types")[0];
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() {
+  const allFilter = t("all");
+  const filtered = activeFilter === null || activeFilter === allFilter
+    ? instruments
+    : instruments.filter(i => {
+        // match on stored type (could be either lang)
+        return i.type === activeFilter;
+      });
+
+  const total = instruments.reduce((s, i) => s + i.amount, 0);
+  const weighted = instruments.reduce((s, i) => s + (i.yield * i.amount), 0);
+  const avgYield = total > 0 ? weighted / total : 0;
+  const annual = total * avgYield / 100;
+
+  document.getElementById("heroTotalNum").textContent = fmt(total);
+  document.getElementById("heroYield").textContent = avgYield.toFixed(2) + "%";
+  document.getElementById("heroAnnual").textContent = "$" + fmt(annual);
+  document.getElementById("heroCount").textContent = instruments.length;
+
+  // composition — grouped by type
+  const compSec = document.getElementById("compositionSection");
+  if (instruments.length > 0 && total > 0) {
+    compSec.style.display = "";
+    const bar = document.getElementById("compositionBar");
+    const legend = document.getElementById("compositionLegend");
+    bar.innerHTML = ""; legend.innerHTML = "";
+
+    // Build ordered type groups preserving insertion order
+    const typeMap = {};
+    instruments.forEach(inst => {
+      if (!typeMap[inst.type]) typeMap[inst.type] = 0;
+      typeMap[inst.type] += inst.amount;
+    });
+    const typeEntries = Object.entries(typeMap); // [[type, amount], ...]
+
+    typeEntries.forEach(([type, amount], idx) => {
+      const pct = (amount / total * 100).toFixed(1);
+      const col = colorForIndex(idx);
+      const seg = document.createElement("div");
+      seg.className = "composition-bar-seg";
+      seg.style.flex = amount / total;
+      seg.style.background = col;
+      seg.title = `${type}: ${pct}%`;
+      bar.appendChild(seg);
+      const li = document.createElement("div");
+      li.className = "legend-item";
+      li.innerHTML = `<span class="legend-dot" style="background:${col}"></span>${type} <span class="mono" style="color:var(--text-dim);font-size:11px;">${pct}%</span>`;
+      legend.appendChild(li);
+    });
+  } else { compSec.style.display = "none"; }
+
+  // filters
+  const types = [t("all"), ...new Set(instruments.map(i => i.type))];
+  const filterDiv = document.getElementById("filterBtns");
+  filterDiv.innerHTML = "";
+  types.forEach(type => {
+    const isAll = type === t("all");
+    const isActive = (activeFilter === null && isAll) || activeFilter === type;
+    const btn = document.createElement("button");
+    btn.className = "filter-btn" + (isActive ? " active" : "");
+    btn.textContent = type;
+    btn.onclick = () => { activeFilter = isAll ? null : type; render(); };
+    filterDiv.appendChild(btn);
+  });
+
+  // grid
+  const grid = document.getElementById("grid");
+  const empty = document.getElementById("emptyState");
+  grid.innerHTML = "";
+
+  if (filtered.length === 0) {
+    empty.style.display = "";
+    if (instruments.length > 0) {
+      document.getElementById("empty-title").textContent = t("emptyFilter") + ' "' + activeFilter + '"';
+      document.getElementById("empty-desc").innerHTML = t("emptyFilterDesc") + ' "' + activeFilter + '".';
+    } else {
+      document.getElementById("empty-title").textContent = t("emptyTitle");
+      document.getElementById("empty-desc").innerHTML = t("emptyDesc");
+    }
+  } else {
+    empty.style.display = "none";
+    filtered.forEach(inst => {
+      const typeKeys = Object.keys(
+        instruments.reduce((m, i) => { m[i.type] = 1; return m; }, {})
+      );
+      const typeIdx = typeKeys.indexOf(inst.type);
+      const col = colorForIndex(typeIdx);
+      const annualInst = inst.amount * inst.yield / 100;
+      const pct = total > 0 ? (inst.amount / total * 100).toFixed(1) : "0.0";
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card-top">
+          <div class="card-icon">${inst.icon || "📈"}</div>
+          <div class="card-actions">
+            <button class="icon-btn" onclick="openEdit('${inst.id}')">✏️</button>
+            <button class="icon-btn danger" onclick="deleteInstrument('${inst.id}')">🗑️</button>
+          </div>
+        </div>
+        <div class="card-name">${inst.name}</div>
+        <div class="card-type">${inst.type}</div>
+        <div class="card-amount mono">$${fmt(inst.amount)}</div>
+        <div class="card-yield-row">
+          <span class="card-yield-label">${t("annualYield")}</span>
+          <span class="card-yield-val mono" style="color:${inst.yield < 0 ? 'var(--red)' : 'var(--green)'}">${inst.yield >= 0 ? '' : ''}${inst.yield.toFixed(2)}%</span>
+        </div>
+        <div class="card-yield-projected">${t("estGain")} <span style="color:${inst.yield < 0 ? 'var(--red)' : 'var(--green)'};opacity:0.8;">$${fmt(annualInst)}${t("perYear")}</span></div>
+        <div class="card-weight-bar"><div class="card-weight-fill" style="width:${pct}%;background:${col}"></div></div>
+        <div class="card-updated">${t("updated")}: ${inst.updated || today()}</div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+function buildEmojiGrid(selected) {
+  const g = document.getElementById("emojiGrid"); g.innerHTML = "";
+  EMOJIS.forEach(e => {
+    const opt = document.createElement("div");
+    opt.className = "emoji-opt" + (selected === e ? " selected" : "");
+    opt.textContent = e;
+    opt.onclick = () => { document.getElementById("inputEmoji").value = e; buildEmojiGrid(e); };
+    g.appendChild(opt);
+  });
+}
+
+function openModal() {
+  editingId = null;
+  document.getElementById("modalTitle").textContent = t("modalAdd");
+  document.getElementById("modalSaveBtn").textContent = t("btnSave");
+  document.getElementById("inputName").value = "";
+  document.getElementById("inputType").value = t("types")[0];
+  document.getElementById("inputAmount").value = "";
+  document.getElementById("inputYield").value = "";
+  setYieldSign(false);
+  document.getElementById("inputEmoji").value = "📈";
+  document.getElementById("suggestions").style.display = "none";
+  buildEmojiGrid("📈");
+  document.getElementById("overlay").classList.add("open");
+  setTimeout(() => document.getElementById("inputName").focus(), 200);
+}
+
+function openEdit(id) {
+  const inst = instruments.find(i => i.id === id);
+  if (!inst) return;
+  editingId = id;
+  document.getElementById("modalTitle").textContent = t("modalEdit");
+  document.getElementById("modalSaveBtn").textContent = t("btnSaveEdit");
+  document.getElementById("inputName").value = inst.name;
+  document.getElementById("inputType").value = inst.type;
+  document.getElementById("inputAmount").value = inst.amount;
+  document.getElementById("inputYield").value = Math.abs(inst.yield);
+  setYieldSign(inst.yield < 0);
+  document.getElementById("inputEmoji").value = inst.icon || "📈";
+  document.getElementById("suggestions").style.display = "none";
+  buildEmojiGrid(inst.icon || "📈");
+  document.getElementById("overlay").classList.add("open");
+}
+
+function closeModal() {
+  document.getElementById("overlay").classList.remove("open");
+  document.getElementById("suggestions").style.display = "none";
+}
+function handleOverlayClick(e) { if (e.target === document.getElementById("overlay")) closeModal(); }
+
+// ─── INFO MODAL ──────────────────────────────────────────────────────────────
+function openInfo() { document.getElementById("infoOverlay").classList.add("open"); }
+function closeInfo() { document.getElementById("infoOverlay").classList.remove("open"); }
+function handleInfoClick(e) { if (e.target === document.getElementById("infoOverlay")) closeInfo(); }
+
+// ─── AUTOCOMPLETE ─────────────────────────────────────────────────────────────
+function onNameInput() {
+  const val = document.getElementById("inputName").value.toLowerCase().trim();
+  const sug = document.getElementById("suggestions");
+  if (!val) { sug.style.display = "none"; return; }
+  const matches = CATALOG.filter(c =>
+    c.name.toLowerCase().includes(val) || c.nameEn.toLowerCase().includes(val)
+  );
+  if (!matches.length) { sug.style.display = "none"; return; }
+  sug.innerHTML = "";
+  matches.slice(0, 5).forEach(m => {
+    const item = document.createElement("div");
+    item.className = "suggestion-item";
+    const displayName = lang === "es" ? m.name : m.nameEn;
+    const yieldStr = m.yield !== null ? m.yield + t("refYield") : t("variableYield");
+    item.innerHTML = `
+      <span class="suggestion-item-icon">${m.icon}</span>
+      <div class="suggestion-item-info">
+        <div class="suggestion-item-name">${displayName}</div>
+        <div class="suggestion-item-yield">${yieldStr}</div>
+      </div>`;
+    item.onclick = () => applySuggestion(m);
+    sug.appendChild(item);
+  });
+  sug.style.display = "";
+}
+
+function applySuggestion(m) {
+  const typeKey = lang === "es" ? m.typeEs : m.typeEn;
+  document.getElementById("inputName").value = lang === "es" ? m.name : m.nameEn;
+  document.getElementById("inputType").value = typeKey;
+  document.getElementById("inputEmoji").value = m.icon;
+  if (m.yield !== null) document.getElementById("inputYield").value = m.yield;
+  buildEmojiGrid(m.icon);
+  document.getElementById("suggestions").style.display = "none";
+}
+
+// ─── CRUD ────────────────────────────────────────────────────────────────────
+function saveInstrument() {
+  const name   = document.getElementById("inputName").value.trim();
+  const type   = document.getElementById("inputType").value;
+  const amount = parseFloat(document.getElementById("inputAmount").value);
+  const yld = parseFloat(document.getElementById("inputYield").value) * (yieldNegative ? -1 : 1);
+  const icon   = document.getElementById("inputEmoji").value.trim() || "📈";
+
+  if (!name)                       return showToast(t("toastName"));
+  if (isNaN(amount) || amount < 0) return showToast(t("toastAmount"));
+  if (isNaN(yld)) return showToast(t("toastYield"));
+
+  if (editingId) {
+    const inst = instruments.find(i => i.id === editingId);
+    const changed = inst.amount !== amount || inst.yield !== yld;
+    inst.name = name; inst.type = type; inst.amount = amount; inst.yield = yld; inst.icon = icon;
+    if (changed) inst.updated = today();
+    showToast(t("toastSaved"), true);
+  } else {
+    instruments.push({ id: Date.now().toString(), name, type, amount, yield: yld, icon, updated: today() });
+    showToast(t("toastAdded"), true);
+  }
+  save(); render(); closeModal();
+}
+
+function deleteInstrument(id) {
+  if (!confirm(t("confirmDelete"))) return;
+  instruments = instruments.filter(i => i.id !== id);
+  if (activeFilter !== null && !instruments.some(i => i.type === activeFilter)) activeFilter = null;
+  save(); render();
+  showToast(t("toastDeleted"));
+}
+
+// ─── YIELD SIGN TOGGLE ───────────────────────────────────────────────────────
+let yieldNegative = false;
+
+function toggleYieldSign() {
+  yieldNegative = !yieldNegative;
+  const btn = document.getElementById("yieldSignBtn");
+  const inp = document.getElementById("inputYield");
+  if (yieldNegative) {
+    btn.textContent = "−";
+    btn.style.color = "var(--red)";
+    btn.style.borderColor = "var(--red)";
+    inp.style.color = "var(--red)";
+  } else {
+    btn.textContent = "+";
+    btn.style.color = "var(--text-muted)";
+    btn.style.borderColor = "var(--border)";
+    inp.style.color = "var(--text)";
+  }
+}
+
+function setYieldSign(isNeg) {
+  yieldNegative = isNeg;
+  const btn = document.getElementById("yieldSignBtn");
+  const inp = document.getElementById("inputYield");
+  if (isNeg) {
+    btn.textContent = "−";
+    btn.style.color = "var(--red)";
+    btn.style.borderColor = "var(--red)";
+    inp.style.color = "var(--red)";
+  } else {
+    btn.textContent = "+";
+    btn.style.color = "var(--text-muted)";
+    btn.style.borderColor = "var(--border)";
+    inp.style.color = "var(--text)";
+  }
+}
+
+
+function exportData() {
+  const payload = {
+    app: "portfolio-danzelot",
+    version: "1.0",
+    exportedAt: new Date().toISOString(),
+    instruments: instruments
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const dateStr = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `portafolio-${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(t("exportToast"), true);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      // Accept both a raw array and our wrapped format
+      const data = Array.isArray(parsed) ? parsed : parsed.instruments;
+      if (!Array.isArray(data)) throw new Error("Invalid format");
+      // Validate each entry has minimum required fields
+      data.forEach(item => {
+        if (!item.id || !item.name || item.amount === undefined || item.yield === undefined)
+          throw new Error("Missing fields");
+      });
+      if (!confirm(t("importConfirm"))) return;
+      instruments = data;
+      save();
+      activeFilter = null;
+      render();
+      showToast(t("importToast"), true);
+      closeInfo();
+    } catch {
+      showToast(t("importError"));
+    }
+    // Reset input so same file can be re-imported
+    event.target.value = "";
+  };
+  reader.readAsText(file);
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+function showToast(msg, green) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.className = "toast show" + (green ? " green" : "");
+  setTimeout(() => toast.className = "toast", 2800);
+}
+
+// ─── KEYBOARD ────────────────────────────────────────────────────────────────
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { closeModal(); closeInfo(); }
+  if ((e.key === "n" || e.key === "N") && document.activeElement.tagName !== "INPUT"
+      && !document.getElementById("overlay").classList.contains("open")) openModal();
+});
+
+// ─── DEMO DATA ────────────────────────────────────────────────────────────────
+if (!instruments.length) {
+  instruments = [
+    { id:"1", name:"CETES 28 días", type:"Gobierno",  amount:50000, yield:10.55, icon:"🏛️", updated:"16 jun 2026" },
+    { id:"2", name:"Nu Cuenta",     type:"Fintech",   amount:25000, yield:13.0,  icon:"💜", updated:"16 jun 2026" },
+    { id:"3", name:"GBM+",          type:"Inversión", amount:30000, yield:11.0,  icon:"📈", updated:"16 jun 2026" },
+  ];
+  save();
+}
+
+applyLang();
+render();
+</script>
+</body>
+</html>
